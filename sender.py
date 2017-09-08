@@ -22,12 +22,14 @@ class Sender:
 		self._sender_socket.bind(('127.0.0.1', port)) # ?????
 
 
-	def sendFileContents(self):
+	def createPacket(self):
 		data = ""
 		with open(self._filename,'r') as f:
-    		data = f.read()
+			for line in f.read():
+				data += line
 
-    	header = Header()
+    	header = STPHeader()
+    	packet = STPPacket(header, data)
 
 
 

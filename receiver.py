@@ -5,8 +5,24 @@ class Receiver():
 	def __init__(self, receiver_port, filename):
 		self._receiver_port = receiver_port
 		self._filename = filename
-		
-		# set up receiver socket
+
+		beginCommunication()
+		# create filename file.txt
+			# all incoming data should be stored in this file
+			# - extract STP packet from UDP datagram
+			# - extract the data (i.e. payload) from STP packet
+			# - can examine header of UDP datagram to determine
+				# udp port & IP addr. that sender is using
+
+
+	# 3-way handshake
+	def beginCommunication(self):
+		# make the UDP listening socket on the receiver_port
+		# while loop waiting for a SYN
+			# wait
+		# on SYN, reply SYNACK segment
+
+
 
 
 receiver_port = sys.argv[1]
