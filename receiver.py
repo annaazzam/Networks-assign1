@@ -23,6 +23,23 @@ class Receiver():
 		# on SYN, reply SYNACK segment
 
 
+	# Receives packets from the UDP socket
+	# -- called when recieved? orr.... 
+	def receivePacket(self):
+		# call STP protocol
+			# write received data to a file
+			# send ACK 
+			#
+		pass
+
+
+	# applies STP protocol & retrieves the STP segment from UDP packet
+	def STPProtocol(self):
+		pass
+
+	# creates an ACK and sends it via the UDP socket
+	def transmitACKPacket(self):
+
 
 
 receiver_port = sys.argv[1]
