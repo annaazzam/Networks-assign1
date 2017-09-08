@@ -22,14 +22,35 @@ class Sender:
 		self._sender_socket.bind(('127.0.0.1', port)) # ?????
 
 
-	def createPacket(self):
+	# Reads the file and creates an STP segment
+	def createSTPPacket(self):
 		data = ""
 		with open(self._filename,'r') as f:
 			for line in f.read():
 				data += line
 
     	header = STPHeader()
-    	packet = STPPacket(header, data)
+    	stp_packet = STPPacket(header, data)
+
+
+    # applies STP protocol for reliable data transfer
+    def STPProtocol(self):
+    	pass
+
+
+    # Simulates packet loss
+    def PLDModule(self):
+    	pass
+
+    # creates a UDP packet, where the "data" in the packet
+    # is the STP packet
+    def createUDPDatagram(self):
+    	pass
+
+
+    # sends the UDP packet to receiver
+    def sendToReceiver(self):
+    	pass
 
 
 
