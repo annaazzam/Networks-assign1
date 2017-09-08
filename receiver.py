@@ -6,7 +6,7 @@ class Receiver():
 		self._receiver_port = receiver_port
 		self._filename = filename
 
-		beginCommunication()
+		self.beginCommunication()
 		# create filename file.txt
 			# all incoming data should be stored in this file
 			# - extract STP packet from UDP datagram
@@ -22,6 +22,12 @@ class Receiver():
 			# wait
 		# on SYN, reply SYNACK segment
 
+		self._receiver_socket = socket(AF_INET, SOCK_DGRAM)
+		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
+		while True:
+			data, addr = self._receiver_socket.recvfrom(self._receiver_port)
+			
+			print data
 
 	# Receives packets from the UDP socket
 	# -- called when recieved? orr.... 
@@ -39,9 +45,10 @@ class Receiver():
 
 	# creates an ACK and sends it via the UDP socket
 	def transmitACKPacket(self):
+		pass
 
 
 
-receiver_port = sys.argv[1]
+receiver_port = int(sys.argv[1])
 filename = sys.argv[2]
 receiver = Receiver(receiver_port, filename)

@@ -14,13 +14,15 @@ class Sender:
 		self._pdrop = pdrop
 		self._seed = seed
 
-		initSenderSocket()
+		self.initSenderSocket()
 
 	def initSenderSocket(self):
 		# create a UDP server socket
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
-		self._sender_socket.bind(('127.0.0.1', port)) # ?????
+		#self._sender_socket.bind((self._receiver_host_ip, self._receiver_port)) # ?????
 
+		self._sender_socket.sendto("hello world", (self._receiver_host_ip, self._receiver_port))
+		
 
 	# Reads the file and creates an STP segment
 	def createSTPPacket(self):
@@ -29,28 +31,28 @@ class Sender:
 			for line in f.read():
 				data += line
 
-    	header = STPHeader()
-    	stp_packet = STPPacket(header, data)
+		header = STPHeader()
+		stp_packet = STPPacket(header, data)
 
 
-    # applies STP protocol for reliable data transfer
-    def STPProtocol(self):
-    	pass
+	# applies STP protocol for reliable data transfer
+	def STPProtocol(self):
+		pass
 
 
-    # Simulates packet loss
-    def PLDModule(self):
-    	pass
+	# Simulates packet loss
+	def PLDModule(self):
+		pass
 
-    # creates a UDP packet, where the "data" in the packet
-    # is the STP packet
-    def createUDPDatagram(self):
-    	pass
+	# creates a UDP packet, where the "data" in the packet
+	# is the STP packet
+	def createUDPDatagram(self):
+		pass
 
 
-    # sends the UDP packet to receiver
-    def sendToReceiver(self):
-    	pass
+	# sends the UDP packet to receiver
+	def sendToReceiver(self):
+		pass
 
 
 
