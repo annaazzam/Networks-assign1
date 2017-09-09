@@ -2,6 +2,7 @@ from socket import *
 import sys
 from header import STPHeader
 from packet import STPPacket
+import random
 
 class Sender:
 	global current_seq_number
@@ -28,7 +29,8 @@ class Sender:
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
 
 		# ACK num 0 indicates no ack...
-		firstHeader = STPHeader(current_seq_number, 0, 0, 1, 0, 0)
+		firstHeader = STPHeader(Sender.current_seq_number, 0, 0, 1, 0, 0)
+		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 
 		self._sender_socket.sendto(str(firstPacket), (self._receiver_host_ip, self._receiver_port))
@@ -44,21 +46,33 @@ class Sender:
 		# split all the data up into packets
 		stp_packets = []
 		i = 0
-		while i < data.length:
-			curr_packet_data = [i:i+self._MSS]
-			header = STPHeader(current_seq_number, 0, 0, 0, 0, 1)
+		while i < len(data):
+			curr_packet_data = data[i:i+self._MSS]
+			header = STPHeader(Sender.current_seq_number, 0, 0, 0, 0, 1)
 			stp_packet = STPPacket(header, curr_packet_data)
 			stp_packets.append(stp_packet)
-			current_seq_number += 1
+			Sender.current_seq_number += self._MSS
 			i += self._MSS
+
+		return stp_packets
 
 
 	def sendPackets(self, stp_packets):
-		for packet in stp_packets:
-			if self.PLDModule():
-				self.createUDPDatagram(packet)
-			else:
-				pass #is dropped!! ??
+		# if timeout occurred:
+			# retransmit not-yet-acknowledged segment with smallest
+				# sequence number
+			# start timer
+		# elseif ACK received, with ACK field value of y
+			# sendbase = y
+			# if (there are currently any not-yet-acked segments) {
+				# start timer
+			# }
+		# else:
+			# for A packet in stp_packets:
+			# 	if self.PLDModule():
+			# 		self.createUDPDatagram(packet)
+			# 	else:
+			# 		pass #is dropped!! ??
 
 	# Simulates packet loss
 	def PLDModule(self):
@@ -80,7 +94,7 @@ class Sender:
 
 #MAIN "FUNCTION":
 
-current_seq_number = 0
+Sender.current_seq_number = 0
 
 
 receiver_host_ip = sys.argv[1]

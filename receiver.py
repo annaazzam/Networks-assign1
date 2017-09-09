@@ -1,5 +1,6 @@
 from socket import *
 import sys
+from header import HEADER_SIZE
 
 class Receiver():
 	def __init__(self, receiver_port, filename):
@@ -27,7 +28,10 @@ class Receiver():
 
 		while True:
 			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
-			print (UDP_segment)
+			print (str(UDP_segment))
+
+	def retrieveHeader(self, packet):
+		pass
 
 	# Receives packets from the UDP socket
 	# -- called when recieved? orr.... 

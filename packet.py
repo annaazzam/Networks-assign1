@@ -5,6 +5,6 @@ class STPPacket:
 
 	def __str__(self):
 		ret_string = str(self._header) + "\n"
-		ret_string += self._data
+		ret_string += str(self._data)
 
 		return ret_string

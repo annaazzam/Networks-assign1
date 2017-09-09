@@ -15,7 +15,8 @@ class STPHeader:
 	# TODO(anna): add number padding to even out widths
 	def __str__(self):
 		ret_string = ""
-		ret_string += str(self._seq_num) + " " + str(self._ack_number) + " "
+
+		ret_string += '{0:04d}'.format(self._seq_num) + " " + '{0:04d}'.format(self._ack_number) + " "
 
 		ret_string += ("A" if self._ack else "-")
 		ret_string += ("S" if self._syn else "-")
