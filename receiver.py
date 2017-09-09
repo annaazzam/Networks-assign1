@@ -24,10 +24,10 @@ class Receiver():
 
 		self._receiver_socket = socket(AF_INET, SOCK_DGRAM)
 		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
+
 		while True:
-			data, addr = self._receiver_socket.recvfrom(self._receiver_port)
-			
-			print data
+			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+			print (UDP_segment)
 
 	# Receives packets from the UDP socket
 	# -- called when recieved? orr.... 

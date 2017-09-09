@@ -1,8 +1,10 @@
 from socket import *
 import sys
+from header import STPHeader
+from packet import STPPacket
 
 class Sender:
-	#global current_seq_number
+	global current_seq_number
 
 	def __init__(self, receiver_host_ip, receiver_port, filename, MWS, MSS, timeout, pdrop, seed):
 		self._receiver_host_ip = receiver_host_ip
@@ -19,20 +21,31 @@ class Sender:
 	def initSenderSocket(self):
 		# create a UDP server socket
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
-		#self._sender_socket.bind((self._receiver_host_ip, self._receiver_port)) # ?????
 
-		self._sender_socket.sendto("hello world", (self._receiver_host_ip, self._receiver_port))
+		# ACK num 0 indicates no ack...
+		firstHeader = STPHeader(current_seq_number, 0, 0, 1, 0, 0)
+		firstPacket = STPPacket(firstHeader, "")
+
+		self._sender_socket.sendto(str(firstPacket), (self._receiver_host_ip, self._receiver_port))
 		
 
 	# Reads the file and creates an STP segment
-	def createSTPPacket(self):
+	def createSTPPackets(self):
 		data = ""
 		with open(self._filename,'r') as f:
 			for line in f.read():
 				data += line
 
-		header = STPHeader()
-		stp_packet = STPPacket(header, data)
+		# split all the data up into packets
+		stp_packets = []
+		i = 0
+		while i < data.length:
+			curr_packet_data = [i:i+self._MSS]
+			header = STPHeader(current_seq_number, 0, 0, 0, 0, 1)
+			stp_packet = STPPacket(header, curr_packet_data)
+			stp_packets.append(stp_packet)
+			current_seq_number += 1
+			i += self._MSS
 
 
 	# applies STP protocol for reliable data transfer
@@ -55,8 +68,11 @@ class Sender:
 		pass
 
 
+#MAIN "FUNCTION":
 
-#current_seq_number = 0
+current_seq_number = 0
+
+
 receiver_host_ip = sys.argv[1]
 receiver_port = int(sys.argv[2])
 filename = sys.argv[3]

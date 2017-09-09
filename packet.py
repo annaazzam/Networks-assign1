@@ -4,4 +4,7 @@ class STPPacket:
 		self._data = data
 
 	def __str__(self):
-		return ""
+		ret_string = str(self._header) + "\n"
+		ret_string += self._data
+
+		return ret_string
