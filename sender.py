@@ -3,6 +3,7 @@ import sys
 from header import STPHeader
 from packet import STPPacket
 import random
+import time
 
 class Sender:
 	global current_seq_number
@@ -15,11 +16,13 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
+		self._timer = 999999
 
 		random.seed(seed)
 
 		self.initSenderSocket()
 		stp_packets = self.createSTPPackets()
+		self._not_yet_acked_packets = stp_packets[:]
 
 		self.sendPackets(stp_packets)
 
@@ -58,21 +61,34 @@ class Sender:
 
 
 	def sendPackets(self, stp_packets):
-		# if timeout occurred:
-			# retransmit not-yet-acknowledged segment with smallest
-				# sequence number
-			# start timer
-		# elseif ACK received, with ACK field value of y
-			# sendbase = y
-			# if (there are currently any not-yet-acked segments) {
-				# start timer
-			# }
-		# else:
-			# for A packet in stp_packets:
-			# 	if self.PLDModule():
-			# 		self.createUDPDatagram(packet)
-			# 	else:
-			# 		pass #is dropped!! ??
+		i = 0
+		while i < len(stp_packets):
+			message, addr = self._sender_socket.recvfrom(self._receiver_port)
+			currTimePassed = time.time() - self._timer
+			if self.ackNum(message) != 0: # received an ack
+
+				# ack the packet - remove from not yet acked
+				ackNum = self.ackNum(message)
+				for packet in self._not_yet_acked_packets:
+					if self.sequenceNumber(packet) == ackNum:
+						self._not_yet_acked_packets.remove(packet)
+						break
+				# if (there are currently any not-yet-acked segments) {
+					# start timer
+				# }
+			elif currTimePassed >= self._timeout: # if timeout
+				if self.PLDModule():
+					createUDPDatagram(self._not_yet_acked_packets[0])
+				else:
+					pass # is dropped!! ??
+				self._timer = time.time() 
+				
+			else: # send a packet
+				if self.PLDModule():
+					self.createUDPDatagram(stp_packets[i])
+				else:
+					pass #is dropped!! ??
+				i += 1
 
 	# Simulates packet loss
 	def PLDModule(self):
@@ -90,6 +106,12 @@ class Sender:
 	# is the STP packet
 	def createUDPDatagram(self, stp_packet):
 		self._sender_socket.sendto(str(stp_packet), (self._receiver_host_ip, self._receiver_port))
+
+	def ackNum(self, packet):
+		pass
+
+	def sequenceNumber(self, packet):
+		pass
 
 
 #MAIN "FUNCTION":
