@@ -14,10 +14,15 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
-		self._seed = seed
+
+		random.seed(seed)
 
 		self.initSenderSocket()
+		stp_packets = self.createSTPPackets()
 
+		self.sendPackets(stp_packets)
+
+		
 	def initSenderSocket(self):
 		# create a UDP server socket
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
@@ -48,24 +53,29 @@ class Sender:
 			i += self._MSS
 
 
+	def sendPackets(self, stp_packets):
+		for packet in stp_packets:
+			if self.PLDModule():
+				self.createUDPDatagram(packet)
+			else:
+				pass #is dropped!! ??
+
+	# Simulates packet loss
+	def PLDModule(self):
+		rand_num = random.random()
+		if (rand_num < self._pdrop):
+			return True
+		return False
+
+
 	# applies STP protocol for reliable data transfer
 	def STPProtocol(self):
 		pass
 
-
-	# Simulates packet loss
-	def PLDModule(self):
-		pass
-
 	# creates a UDP packet, where the "data" in the packet
 	# is the STP packet
-	def createUDPDatagram(self):
-		pass
-
-
-	# sends the UDP packet to receiver
-	def sendToReceiver(self):
-		pass
+	def createUDPDatagram(self, stp_packet):
+		self._sender_socket.sendto(str(stp_packet), (self._receiver_host_ip, self._receiver_port))
 
 
 #MAIN "FUNCTION":
