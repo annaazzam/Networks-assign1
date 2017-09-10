@@ -1,6 +1,7 @@
 from socket import *
 import sys
-from header import HEADER_SIZE
+from header import STPHeader, HEADER_SIZE
+from packet import STPPacket
 
 class Receiver():
 	global current_ack_num
@@ -30,7 +31,7 @@ class Receiver():
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		# check if syn
 		print ("syn received")
-		transmitAckPacket(1, True)
+		self.transmitACKPacket(1, True, addr)
 		print("syn-ack sent")
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		# check if ack
@@ -39,15 +40,17 @@ class Receiver():
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
 		while True:
-			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
-			print("hello", UDP_segment)
-
+			try:
+				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+				print("hello", UDP_segment)
+			except:
+				pass
 
 	# creates an ACK and sends it via the UDP socket
-	def transmitACKPacket(self, ack_number, isSyn):
+	def transmitACKPacket(self, ack_number, isSyn, clientAddress):
 		ackHeader = STPHeader(0, ack_number, 1, isSyn, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
-		self._sender_socket.sendto(str(ackPacket).encode(), (self._receiver_host_ip, self._receiver_port))
+		self._receiver_socket.sendto(str(ackPacket).encode(), clientAddress)
 
 
 Receiver.current_ack_num = 0
