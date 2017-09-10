@@ -12,6 +12,7 @@ class Receiver():
 		self._received_buffer = []
 
 		self.beginCommunication()
+		self.communicate()
 
 		# create filename file.txt
 			# all incoming data should be stored in this file
@@ -31,38 +32,28 @@ class Receiver():
 		self._receiver_socket = socket(AF_INET, SOCK_DGRAM)
 		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
 
-		while True:
-			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
-			print (str(UDP_segment))
+		
+		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		# check if syn
+		# return syn-ack
+		# wait for ack
+		# return
 
 			# create return segment for 3-way handshake
 
 
 	def communicate(self):
+		self._receiver_socket.setblocking(0)
 		while True:
 			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 			print("hello", UDP_segment)
 
-	def retrieveHeader(self, packet):
-		pass
-
-	# Receives packets from the UDP socket
-	# -- called when recieved? orr.... 
-	def receivePacket(self):
-		# call STP protocol
-			# write received data to a file
-			# send ACK 
-			#
-		pass
-
-
-	# applies STP protocol & retrieves the STP segment from UDP packet
-	def STPProtocol(self):
-		pass
 
 	# creates an ACK and sends it via the UDP socket
-	def transmitACKPacket(self):
-		pass
+	def transmitACKPacket(self, ack_number, isSyn):
+		ackHeader = STPHeader(0, ack_number, 1, isSyn, 0, 0, False)
+		ackPacket = STPPacket(ackHeader, "")
+		self._sender_socket.sendto(str(ackPacket).encode(), (self._receiver_host_ip, self._receiver_port))
 
 
 Receiver.current_ack_num = 0
