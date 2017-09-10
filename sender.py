@@ -36,8 +36,12 @@ class Sender:
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 
+
+		# THREE WAY HANDSHAKE:
+		# send syn
 		self._sender_socket.sendto(str(firstPacket).encode(), (self._receiver_host_ip, self._receiver_port))
-		
+		# wait for a syn-ack
+		message, addr = self._sender_socket.recvfrom(self._receiver_port)
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):

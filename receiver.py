@@ -24,23 +24,17 @@ class Receiver():
 
 	# 3-way handshake
 	def beginCommunication(self):
-		# make the UDP listening socket on the receiver_port
-		# while loop waiting for a SYN
-			# wait
-		# on SYN, reply SYNACK segment
-
 		self._receiver_socket = socket(AF_INET, SOCK_DGRAM)
 		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
-
 		
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		# check if syn
-		# return syn-ack
-		# wait for ack
-		# return
-
-			# create return segment for 3-way handshake
-
+		print ("syn received")
+		transmitAckPacket(1, True)
+		print("syn-ack sent")
+		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		# check if ack
+		print("ack received")
 
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
