@@ -1,6 +1,6 @@
 from socket import *
 import sys
-from header import STPHeader
+from header import STPHeader, HEADER_SIZE
 from packet import STPPacket
 import random
 import time
@@ -16,7 +16,7 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
-		self._timer = 999999
+		self._timer = time.time() + 99999999 # fix dis
 
 		random.seed(seed)
 
@@ -32,11 +32,11 @@ class Sender:
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
 
 		# ACK num 0 indicates no ack...
-		firstHeader = STPHeader(Sender.current_seq_number, 0, 0, 1, 0, 0)
+		firstHeader = STPHeader(Sender.current_seq_number, 0, 0, 1, 0, 0, False)
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 
-		self._sender_socket.sendto(str(firstPacket), (self._receiver_host_ip, self._receiver_port))
+		self._sender_socket.sendto(str(firstPacket).encode(), (self._receiver_host_ip, self._receiver_port))
 		
 
 	# Reads the file and creates an STP segment
@@ -51,7 +51,7 @@ class Sender:
 		i = 0
 		while i < len(data):
 			curr_packet_data = data[i:i+self._MSS]
-			header = STPHeader(Sender.current_seq_number, 0, 0, 0, 0, 1)
+			header = STPHeader(Sender.current_seq_number, 0, 0, 0, 0, 1, False)
 			stp_packet = STPPacket(header, curr_packet_data)
 			stp_packets.append(stp_packet)
 			Sender.current_seq_number += self._MSS
@@ -62,33 +62,44 @@ class Sender:
 
 	def sendPackets(self, stp_packets):
 		i = 0
-		while i < len(stp_packets):
-			message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		while len(self._not_yet_acked_packets) > 0:
+			self._sender_socket.setblocking(0)
+			isAck = 0
+			try:
+				message, addr = self._sender_socket.recvfrom(self._receiver_port)
+				header = STPHeader(message[:HEADER_SIZE])
+				isAck = header.isAck()
+			except:
+				# no packet right now
+				pass
 			currTimePassed = time.time() - self._timer
-			if self.ackNum(message) != 0: # received an ack
 
+			if isAck: # received an ack
+				print("ack got")
 				# ack the packet - remove from not yet acked
 				ackNum = self.ackNum(message)
 				for packet in self._not_yet_acked_packets:
 					if self.sequenceNumber(packet) == ackNum:
 						self._not_yet_acked_packets.remove(packet)
 						break
-				# if (there are currently any not-yet-acked segments) {
-					# start timer
-				# }
+				if (len(self._not_yet_acked_packets) > 0):
+					self._timer = time.time()
 			elif currTimePassed >= self._timeout: # if timeout
+				print("timeout happened")
 				if self.PLDModule():
-					createUDPDatagram(self._not_yet_acked_packets[0])
+					self.createUDPDatagram(self._not_yet_acked_packets[0])
 				else:
 					pass # is dropped!! ??
 				self._timer = time.time() 
 				
-			else: # send a packet
+			elif i < len(stp_packets): # send a packet
+				print("else")
 				if self.PLDModule():
 					self.createUDPDatagram(stp_packets[i])
+					i += 1
 				else:
 					pass #is dropped!! ??
-				i += 1
+
 
 	# Simulates packet loss
 	def PLDModule(self):
@@ -105,13 +116,12 @@ class Sender:
 	# creates a UDP packet, where the "data" in the packet
 	# is the STP packet
 	def createUDPDatagram(self, stp_packet):
-		self._sender_socket.sendto(str(stp_packet), (self._receiver_host_ip, self._receiver_port))
+		self._sender_socket.sendto(str(stp_packet).encode(), (self._receiver_host_ip, self._receiver_port))
 
-	def ackNum(self, packet):
-		pass
 
 	def sequenceNumber(self, packet):
 		pass
+
 
 
 #MAIN "FUNCTION":

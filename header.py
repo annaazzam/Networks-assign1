@@ -1,16 +1,33 @@
-HEADER_SIZE = 0
+HEADER_SIZE = 14
 
 class STPHeader:
-	def __init__(self, seq_num, ack_num, ack, syn, fin, data):
-		self._seq_num = seq_num
-		self._ack_number = ack_num
+	def __init__(self, seq_num=0, ack_num=0, ack=0, syn=0, fin=0, data=0, isCopyConstructor=True):
+		if isCopyConstructor: # Workaround for  2 constructors
+			header = seq_num
 
-		# FLAGS
-		self._ack = ack
-		self._syn = syn
-		self._fin = fin
-		self._data = data
+			self._seq_num = header[0:4]
+			self._ack_number = header[4:9]
 
+			self._ack = header[10]
+			self._syn = header[11]
+			self._fin = header[12]
+			self._data = header[13]
+		else:
+
+			self._seq_num = seq_num
+			self._ack_number = ack_num
+
+			# FLAGS
+			self._ack = ack
+			self._syn = syn
+			self._fin = fin
+			self._data = data
+
+	def isAck():
+		return self._ack
+
+	def ackNum():
+		return self._ack_number
 
 	# TODO(anna): add number padding to even out widths
 	def __str__(self):
@@ -24,3 +41,4 @@ class STPHeader:
 		ret_string += ("D" if self._data else "-")
 
 		return ret_string
+

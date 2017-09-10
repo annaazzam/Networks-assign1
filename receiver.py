@@ -3,11 +3,16 @@ import sys
 from header import HEADER_SIZE
 
 class Receiver():
+	global current_ack_num
+
 	def __init__(self, receiver_port, filename):
 		self._receiver_port = receiver_port
 		self._filename = filename
 
+		self._received_buffer = []
+
 		self.beginCommunication()
+
 		# create filename file.txt
 			# all incoming data should be stored in this file
 			# - extract STP packet from UDP datagram
@@ -29,6 +34,14 @@ class Receiver():
 		while True:
 			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 			print (str(UDP_segment))
+
+			# create return segment for 3-way handshake
+
+
+	def communicate(self):
+		while True:
+			UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+			print("hello", UDP_segment)
 
 	def retrieveHeader(self, packet):
 		pass
@@ -52,6 +65,7 @@ class Receiver():
 		pass
 
 
+Receiver.current_ack_num = 0
 
 receiver_port = int(sys.argv[1])
 filename = sys.argv[2]
