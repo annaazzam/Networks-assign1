@@ -1,6 +1,6 @@
 from socket import *
 import sys
-from header import STPHeader, HEADER_SIZE
+from header import STPHeader, extractHeader, extractContent
 from packet import STPPacket
 
 class Receiver():
@@ -8,9 +8,11 @@ class Receiver():
 
 	def __init__(self, receiver_port, filename):
 		self._receiver_port = receiver_port
-		self._filename = filename
+		self._file = open(filename, "w")
 
 		self._received_buffer = []
+
+
 
 		self.beginCommunication()
 		self.communicate()
@@ -42,9 +44,16 @@ class Receiver():
 		while True:
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
-				print("hello", UDP_segment)
+				print("received:", UDP_segment)
+				self.writePacketData(UDP_segment.decode('utf-8'))
 			except:
 				pass
+
+	def writePacketData(self, packet):
+		print ("extracting: " + str(packet))
+		contentToWrite = extractContent(str(packet))
+		self._file.write(contentToWrite)
+
 
 	# creates an ACK and sends it via the UDP socket
 	def transmitACKPacket(self, ack_number, isSyn, clientAddress):

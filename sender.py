@@ -1,6 +1,6 @@
 from socket import *
 import sys
-from header import STPHeader, HEADER_SIZE
+from header import STPHeader, extractHeader
 from packet import STPPacket
 import random
 import time
@@ -26,6 +26,8 @@ class Sender:
 
 		self.sendPackets(stp_packets)
 
+		self.terminateConnection()
+
 		
 	def initSenderSocket(self):
 		# create a UDP server socket
@@ -36,25 +38,28 @@ class Sender:
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 
-
 		# THREE WAY HANDSHAKE:
 		# send syn
-		self._sender_socket.sendto(str(firstPacket).encode(), (self._receiver_host_ip, self._receiver_port))
+		self.createUDPDatagram(firstPacket)
+		
 		# wait for a syn-ack
 		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+
+		
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):
 		data = ""
 		with open(self._filename,'r') as f:
 			for line in f.read():
-				data += line
+					data += line
 
 		# split all the data up into packets
 		stp_packets = []
 		i = 0
 		while i < len(data):
 			curr_packet_data = data[i:i+self._MSS]
+
 			header = STPHeader(Sender.current_seq_number, 0, 0, 0, 0, 1, False)
 			stp_packet = STPPacket(header, curr_packet_data)
 			stp_packets.append(stp_packet)
@@ -71,7 +76,7 @@ class Sender:
 			isAck = False
 			try:
 				message, addr = self._sender_socket.recvfrom(self._receiver_port)
-				header = STPHeader(message[:HEADER_SIZE])
+				header = STPHeader(extractHeader(message))
 				isAck = header.isAck()
 			except:
 				# no packet right now
@@ -113,17 +118,12 @@ class Sender:
 		return False
 
 
-	# applies STP protocol for reliable data transfer
-	def STPProtocol(self):
-		pass
-
 	# creates a UDP packet, where the "data" in the packet
 	# is the STP packet
 	def createUDPDatagram(self, stp_packet):
 		self._sender_socket.sendto(str(stp_packet).encode(), (self._receiver_host_ip, self._receiver_port))
 
-
-	def sequenceNumber(self, packet):
+	def terminateConnection(self):
 		pass
 
 
