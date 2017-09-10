@@ -64,7 +64,7 @@ class Sender:
 		i = 0
 		while len(self._not_yet_acked_packets) > 0:
 			self._sender_socket.setblocking(0)
-			isAck = 0
+			isAck = False
 			try:
 				message, addr = self._sender_socket.recvfrom(self._receiver_port)
 				header = STPHeader(message[:HEADER_SIZE])
@@ -72,8 +72,8 @@ class Sender:
 			except:
 				# no packet right now
 				pass
-			currTimePassed = time.time() - self._timer
 
+			currTimePassed = time.time() - self._timer
 			if isAck: # received an ack
 				print("ack got")
 				# ack the packet - remove from not yet acked
