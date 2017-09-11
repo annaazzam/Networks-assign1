@@ -1,6 +1,6 @@
 from socket import *
 import sys
-from header import STPHeader, extractHeader
+from header import STPHeader, extractHeader, extractContent
 from packet import STPPacket
 import random
 import time
@@ -72,43 +72,59 @@ class Sender:
 
 	def sendPackets(self, stp_packets):
 		i = 0
+
+		sendbase = 0 # earliest not acked packet
+		next_seq_num = 0 # earliest not sent packet
+
 		while len(self._not_yet_acked_packets) > 0:
+
+			# when window finished, send all packets in this new window
+			if sendbase == next_seq_num:
+				# send all the packets
+				for i in range(self._MWS / self._MSS):
+					index = sendbase/self._MSS + i
+					if self.PLDModule():
+						self.createUDPDatagram(stp_packets[index])
+					else:
+						pass #is dropped!! ??
+					next_seq_num += len(extractContent(stp_packets[index]))
+
+			# try to get an ACK:
 			self._sender_socket.setblocking(0)
 			isAck = False
+			ackNum = 0
 			try:
 				message, addr = self._sender_socket.recvfrom(self._receiver_port)
 				header = STPHeader(extractHeader(message))
 				isAck = header.isAck()
+				ackNum = header.ackNum()
 			except:
 				# no packet right now
 				pass
 
 			currTimePassed = time.time() - self._timer
+
 			if isAck: # received an ack
 				print("ack got")
-				# ack the packet - remove from not yet acked
-				ackNum = self.ackNum(message)
-				for packet in self._not_yet_acked_packets:
-					if self.sequenceNumber(packet) == ackNum:
-						self._not_yet_acked_packets.remove(packet)
-						break
-				if (len(self._not_yet_acked_packets) > 0):
-					self._timer = time.time()
+				if (ackNum > sendbase):
+					sendbase = ackNum
+					if (sendbase < next_seq_num):
+					 	self._timer = time.time() 
 			elif currTimePassed >= self._timeout: # if timeout
 				print("timeout happened")
 				if self.PLDModule():
-					self.createUDPDatagram(self._not_yet_acked_packets[0])
+					self.createUDPDatagram(stp_packets[sendbase/self._MSS])
 				else:
 					pass # is dropped!! ??
 				self._timer = time.time() 
 				
-			elif i < len(stp_packets): # send a packet
-				print("else")
-				if self.PLDModule():
-					self.createUDPDatagram(stp_packets[i])
-					i += 1
-				else:
-					pass #is dropped!! ??
+			# elif i < len(stp_packets): # send a packet
+			# 	print("else")
+			# 	if self.PLDModule():
+			# 		self.createUDPDatagram(stp_packets[i])
+			# 		i += 1
+			# 	else:
+			# 		pass #is dropped!! ??
 
 
 	# Simulates packet loss

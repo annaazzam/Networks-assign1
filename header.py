@@ -29,6 +29,9 @@ class STPHeader:
 	def ackNum():
 		return self._ack_number
 
+	def seqNum():
+		return self._seq_num
+
 	# TODO(anna): add number padding to even out widths
 	def __str__(self):
 		ret_string = ""
@@ -47,3 +50,4 @@ def extractHeader(packet):
 
 def extractContent(packet):
 	return packet[HEADER_SIZE:]
+
