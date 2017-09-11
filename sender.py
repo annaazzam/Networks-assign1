@@ -80,12 +80,12 @@ class Sender:
 			# when window finished, send all packets in this new window
 			if sendbase >= next_seq_num:
 				for i in range(0,(self._MWS / self._MSS)):
-					index = sendbase/self._MSS + i
 					if self.PLDModule():
-						self.createUDPDatagram(stp_packets[index])
+						self.createUDPDatagram(stp_packets[sendbase + i])
 					else:
 						pass #is dropped!! ??
-					next_seq_num += len(extractContent(stp_packets[index]))
+					#next_seq_num += len(extractContent(stp_packets[index]))
+					next_seq_num += 1
 
 			# try to get an ACK:
 			self._sender_socket.setblocking(0)
@@ -105,13 +105,19 @@ class Sender:
 			if isAck: # received an ack
 				print("ack got")
 				if (ackNum > sendbase):
-					sendbase = ackNum
+					i = 0
+					for packet in stp_packets:
+						if packet._header.seqNum() == ackNum:
+							sendbase = i
+							break
+						i += 1
+					#sendbase = ackNum
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time() 
 			elif currTimePassed >= self._timeout: # if timeout
 				print("timeout happened")
 				if self.PLDModule():
-					self.createUDPDatagram(stp_packets[sendbase/self._MSS])
+					self.createUDPDatagram(stp_packets[sendbase])
 				else:
 					pass # is dropped!! ??
 				self._timer = time.time() 
@@ -131,6 +137,7 @@ class Sender:
 		self._sender_socket.sendto(str(stp_packet).encode(), (self._receiver_host_ip, self._receiver_port))
 
 	def terminateConnection(self):
+		print ("made it boys")
 		pass
 
 

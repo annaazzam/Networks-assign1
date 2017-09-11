@@ -49,8 +49,6 @@ class Receiver():
 			except:
 				pass
 
-				
-
 		self.writeAllPackets(received_packets)
 
 	def getNewestACKNum(self, received_packets):
