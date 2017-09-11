@@ -41,11 +41,12 @@ class Sender:
 		# THREE WAY HANDSHAKE:
 		# send syn
 		self.createUDPDatagram(firstPacket)
-		
 		# wait for a syn-ack
 		message, addr = self._sender_socket.recvfrom(self._receiver_port)
-
-		
+		# send ack
+		ackHeader = STPHeader(0, 0, 1, 0, 0, 0, False)
+		ackPacket = STPPacket(ackHeader, "")
+		self.createUDPDatagram(ackPacket)
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):
