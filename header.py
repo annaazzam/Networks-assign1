@@ -46,8 +46,10 @@ class STPHeader:
 		return ret_string
 
 def extractHeader(packet):
+	packet = str(packet)
 	return packet[:HEADER_SIZE]
 
 def extractContent(packet):
+	packet = str(packet)
 	return packet[HEADER_SIZE:]
 

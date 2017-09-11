@@ -12,18 +12,8 @@ class Receiver():
 
 		self._received_buffer = []
 
-
-
 		self.beginCommunication()
 		self.communicate()
-
-		# create filename file.txt
-			# all incoming data should be stored in this file
-			# - extract STP packet from UDP datagram
-			# - extract the data (i.e. payload) from STP packet
-			# - can examine header of UDP datagram to determine
-				# udp port & IP addr. that sender is using
-
 
 	# 3-way handshake
 	def beginCommunication(self):
@@ -50,7 +40,6 @@ class Receiver():
 				pass
 
 	def writePacketData(self, packet):
-		print ("extracting: " + str(packet))
 		contentToWrite = extractContent(str(packet))
 		self._file.write(contentToWrite)
 

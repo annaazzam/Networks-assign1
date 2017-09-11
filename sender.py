@@ -77,11 +77,12 @@ class Sender:
 		next_seq_num = 0 # earliest not sent packet
 
 		while len(self._not_yet_acked_packets) > 0:
-
 			# when window finished, send all packets in this new window
 			if sendbase == next_seq_num:
+				print("hey")
 				# send all the packets
-				for i in range(self._MWS / self._MSS):
+				for i in range(0,(self._MWS / self._MSS)):
+					
 					index = sendbase/self._MSS + i
 					if self.PLDModule():
 						self.createUDPDatagram(stp_packets[index])
@@ -105,26 +106,20 @@ class Sender:
 			currTimePassed = time.time() - self._timer
 
 			if isAck: # received an ack
+				print ("hi2")
 				print("ack got")
 				if (ackNum > sendbase):
 					sendbase = ackNum
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time() 
 			elif currTimePassed >= self._timeout: # if timeout
+				print("hi3")
 				print("timeout happened")
 				if self.PLDModule():
 					self.createUDPDatagram(stp_packets[sendbase/self._MSS])
 				else:
 					pass # is dropped!! ??
 				self._timer = time.time() 
-				
-			# elif i < len(stp_packets): # send a packet
-			# 	print("else")
-			# 	if self.PLDModule():
-			# 		self.createUDPDatagram(stp_packets[i])
-			# 		i += 1
-			# 	else:
-			# 		pass #is dropped!! ??
 
 
 	# Simulates packet loss
