@@ -71,8 +71,6 @@ class Sender:
 
 
 	def sendPackets(self, stp_packets):
-		i = 0
-
 		sendbase = 0 # earliest not acked packet
 		next_seq_num = 0 # earliest not sent packet
 
