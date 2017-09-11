@@ -5,17 +5,16 @@ class STPHeader:
 		if isCopyConstructor: # Workaround for  2 constructors
 			header = seq_num
 
-			self._seq_num = header[0:4]
-			self._ack_number = header[4:9]
+			self._seq_num = int(header[0:4])
+			self._ack_number = int(header[4:9])
 
-			self._ack = header[10]
-			self._syn = header[11]
-			self._fin = header[12]
-			self._data = header[13]
+			self._ack = (1 if header[10] != '-' else 0)
+			self._syn = (1 if header[11] != '-' else 0)
+			self._fin = (1 if header[12] != '-' else 0)
+			self._data = (1 if header[13] != '-' else 0)
 		else:
-
-			self._seq_num = seq_num
-			self._ack_number = ack_num
+			self._seq_num = int(seq_num)
+			self._ack_number = int(ack_num)
 
 			# FLAGS
 			self._ack = ack
@@ -23,13 +22,13 @@ class STPHeader:
 			self._fin = fin
 			self._data = data
 
-	def isAck():
+	def isAck(self):
 		return self._ack
 
-	def ackNum():
+	def ackNum(self):
 		return self._ack_number
 
-	def seqNum():
+	def seqNum(self):
 		return self._seq_num
 
 	# TODO(anna): add number padding to even out widths

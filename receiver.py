@@ -31,18 +31,40 @@ class Receiver():
 
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
+		received_packets = {}
+		next_expected = 0
 		while True:
+			UDP_segment = False
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				print("received:", UDP_segment)
-				self.writePacketData(UDP_segment.decode('utf-8'))
+
+				header = STPHeader(extractHeader(UDP_segment))
+				seqNum = header.seqNum()
+				received_packets[seqNum] = UDP_segment
+
+				ackNum = self.getNewestACKNum(received_packets)
+
+				self.transmitACKPacket(ackNum, 0, addr)
 			except:
 				pass
+
+				
+
+		self.writeAllPackets(received_packets)
+
+	def getNewestACKNum(self, received_packets):
+		highestSeqNum = max(received_packets.keys())
+		return int(highestSeqNum) + int(len(extractContent(received_packets[highestSeqNum])))
+
+	def writeAllPackets(received_packets):
+		for k in sorted(received_packets.keys()):
+			UDP_segment = received_packets[k]
+			self.writePacketData(UDP_segment.decode('utf-8'))
 
 	def writePacketData(self, packet):
 		contentToWrite = extractContent(str(packet))
 		self._file.write(contentToWrite)
-
 
 	# creates an ACK and sends it via the UDP socket
 	def transmitACKPacket(self, ack_number, isSyn, clientAddress):
