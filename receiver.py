@@ -39,7 +39,12 @@ class Receiver():
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				print("received:", UDP_segment)
 
+
 				header = STPHeader(extractHeader(UDP_segment))
+
+				if header.isFin(): # Connection terminating!
+					break
+
 				seqNum = header.seqNum()
 				received_packets[seqNum] = UDP_segment
 
@@ -55,7 +60,7 @@ class Receiver():
 		highestSeqNum = max(received_packets.keys())
 		return int(highestSeqNum) + int(len(extractContent(received_packets[highestSeqNum])))
 
-	def writeAllPackets(received_packets):
+	def writeAllPackets(self, received_packets):
 		for k in sorted(received_packets.keys()):
 			UDP_segment = received_packets[k]
 			self.writePacketData(UDP_segment.decode('utf-8'))

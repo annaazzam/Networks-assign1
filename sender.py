@@ -74,15 +74,16 @@ class Sender:
 		sendbase = 0 # earliest not acked packet
 		next_seq_num = 0 # earliest not sent packet
 
-		while next_seq_num < len(stp_packets) * self._MSS:
-			# when window finished, send all packets in this new window
-			if sendbase >= next_seq_num:
+		while next_seq_num < len(stp_packets):
+			# # when window finished, send all packets in this new window
+			if sendbase == next_seq_num:
 				for i in range(0,(self._MWS / self._MSS)):
+					if (sendbase + i >= len(stp_packets)):
+						break
 					if self.PLDModule():
 						self.createUDPDatagram(stp_packets[sendbase + i])
 					else:
-						pass #is dropped!! ??
-					#next_seq_num += len(extractContent(stp_packets[index]))
+						pass 
 					next_seq_num += 1
 
 			# try to get an ACK:
@@ -109,7 +110,6 @@ class Sender:
 							sendbase = i
 							break
 						i += 1
-					#sendbase = ackNum
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time() 
 			elif currTimePassed >= self._timeout: # if timeout
@@ -136,7 +136,11 @@ class Sender:
 
 	def terminateConnection(self):
 		print ("made it boys")
-		pass
+		finHeader = STPHeader(Sender.current_seq_number,0, 0, 0, 1, 0, False)
+		finPacket = STPPacket(finHeader, "")
+		self.createUDPDatagram(finPacket)
+
+		
 
 
 #MAIN "FUNCTION":
