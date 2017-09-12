@@ -42,6 +42,7 @@ class Receiver():
 				header = STPHeader(extractHeader(UDP_segment))
 
 				if header.isFin(): # Connection terminating!
+					print ("Terminate......")
 					break
 
 				seqNum = header.seqNum()
@@ -61,14 +62,14 @@ class Receiver():
 
 		self.writeAllPackets(received_packets)
 
-	def getNewestACKNum(self, received_packets):
-		prev = 1
-		for key in sorted(received_packets.keys()):
-			if prev != STPHeader(extractHeader(received_packets[key])).seqNum():
-				print ("hey", prev,  STPHeader(extractHeader(received_packets[key])).seqNum())
-				return prev
-			prev = key + int(len(extractContent(received_packets[key])))
-		return prev
+	# def getNewestACKNum(self, received_packets):
+	# 	prev = 1
+	# 	for key in sorted(received_packets.keys()):
+	# 		if prev != STPHeader(extractHeader(received_packets[key])).seqNum():
+	# 			print ("hey", prev,  STPHeader(extractHeader(received_packets[key])).seqNum())
+	# 			return prev
+	# 		prev = key + int(len(extractContent(received_packets[key])))
+	# 	return prev
 
 			# nextPacketIndex = key + int(len(extractContent(received_packets[key])))
 			# if not received_packets[nextPacketIndex]:
