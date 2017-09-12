@@ -83,8 +83,7 @@ class Sender:
 					print ("hey sendin packet", sendbase +i)
 					if (sendbase + i >= len(stp_packets)):
 						break
-					if self.PLDModule():
-						self.createUDPDatagram(stp_packets[sendbase + i])
+					self.PLDModule(stp_packets[sendbase + i])
 					next_seq_num += 1
 					self._timer = time.time()
 
@@ -132,16 +131,14 @@ class Sender:
 
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
-				if self.PLDModule():
-					self.createUDPDatagram(stp_packets[sendbase])
+				self.PLDModule(stp_packets[sendbase])
 				self._timer = time.time()
 
 	# Simulates packet loss
-	def PLDModule(self):
+	def PLDModule(self, packet):
 		rand_num = random.random()
 		if (rand_num >= self._pdrop):
-			return True
-		return False
+			self.createUDPDatagram(packet)
 		
 
 	# creates a UDP packet, where the "data" in the packet
