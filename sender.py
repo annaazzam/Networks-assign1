@@ -134,10 +134,26 @@ class Sender:
 		self._sender_socket.sendto(str(stp_packet).encode(), (self._receiver_host_ip, self._receiver_port))
 
 	def terminateConnection(self):
+		self._sender_socket.setblocking(1)
 		print ("made it boys")
 		finHeader = STPHeader(Sender.current_seq_number,0, 0, 0, 1, 0, False)
 		finPacket = STPPacket(finHeader, "")
 		self.createUDPDatagram(finPacket)
+		print ("sent FIN")
+
+		# wait for ACK
+		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		print ("recevied ACK")
+
+		# wait for FIN
+		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		print("received FIN")
+
+		# send ACK
+		ackHeader = STPHeader(Sender.current_seq_number,0, 0, 1, 0, 0, False)
+		ackPacket = STPPacket(finHeader, "")
+		self.createUDPDatagram(ackPacket)
+		print ("sent ack")
 
 		
 

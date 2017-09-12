@@ -43,6 +43,7 @@ class Receiver():
 
 				if header.isFin(): # Connection terminating!
 					print ("Terminate......")
+					self.terminateConnection(addr)
 					break
 
 				seqNum = header.seqNum()
@@ -74,6 +75,22 @@ class Receiver():
 		ackHeader = STPHeader(0, ack_number, 1, isSyn, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self._receiver_socket.sendto(str(ackPacket).encode(), clientAddress)
+
+	def terminateConnection(self, addr):
+		# send ack
+		self.transmitACKPacket(0, 0, addr)
+		print ("sent ack")
+
+		# send fin
+		finHeader = STPHeader(0, 0, 0, 0, 1, 0, False)
+		finPacket = STPPacket(finHeader, "")
+		self._receiver_socket.sendto(str(finPacket).encode(), addr)
+		print ("sent fin")
+
+		# receive ACK
+		self._receiver_socket.setblocking(1)
+		ack_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		print("received ack")
 
 
 Receiver.current_ack_num = 0
