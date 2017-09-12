@@ -31,10 +31,12 @@ class Receiver():
 
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
-		received_packets = {}
+		received_packets = {} # Buffer for out-of-order received packets
 		next_expected = 1
 		while True:
-			UDP_segment = False
+			#UDP_segment = False
+
+			# tries to get a packet - either ACK or FIN
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				print("received:", UDP_segment)

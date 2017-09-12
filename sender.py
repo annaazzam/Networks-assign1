@@ -74,7 +74,7 @@ class Sender:
 		sendbase = 0 # earliest not acked packet
 		next_seq_num = 0 # earliest not sent packet
 
-		while sendbase < len(stp_packets) - 1:
+		while sendbase < len(stp_packets):
 			# # when window finished, send all packets in this new window
 			if sendbase == next_seq_num:
 				for i in range(0,(self._MWS / self._MSS)):
@@ -110,6 +110,12 @@ class Sender:
 						i += 1
 					if found != 0:
 						sendbase = found
+
+					lastPack = stp_packets[len(stp_packets) - 1]
+					if ackNum == lastPack._header.seqNum() + len(lastPack._data):
+						print("she did that")
+						break
+
 					self._timer = time.time()
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time()
