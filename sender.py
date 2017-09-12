@@ -1,6 +1,6 @@
 from socket import *
 import sys
-from header import STPHeader, extractHeader, extractContent
+from header import STPHeader, extractHeader, extractContent, HEADER_SIZE
 from packet import STPPacket
 import random
 import time
@@ -17,6 +17,8 @@ class Sender:
 		self._timeout = timeout
 		self._pdrop = pdrop
 		self._timer = 0
+
+		self._buffer_size = HEADER_SIZE + MSS
 
 		random.seed(seed)
 
@@ -42,7 +44,7 @@ class Sender:
 		# send syn
 		self.createUDPDatagram(firstPacket)
 		# wait for a syn-ack
-		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		# send ack
 		ackHeader = STPHeader(0, 0, 1, 0, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
@@ -92,7 +94,7 @@ class Sender:
 			isAck = False
 			ackNum = 0
 			try:
-				message, addr = self._sender_socket.recvfrom(self._receiver_port)
+				message, addr = self._sender_socket.recvfrom(self._buffer_size)
 				header = STPHeader(extractHeader(message))
 				isAck = header.isAck()
 				ackNum = header.ackNum()
@@ -137,8 +139,9 @@ class Sender:
 	# Simulates packet loss
 	def PLDModule(self, packet):
 		rand_num = random.random()
-		if (rand_num >= self._pdrop):
+		if (rand_num > self._pdrop):
 			self.createUDPDatagram(packet)
+		# else packet is dropped (not sent)
 		
 
 	# creates a UDP packet, where the "data" in the packet
@@ -155,11 +158,11 @@ class Sender:
 		print ("sent FIN")
 
 		# wait for ACK
-		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		print ("recevied ACK")
 
 		# wait for FIN
-		message, addr = self._sender_socket.recvfrom(self._receiver_port)
+		message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		print("received FIN")
 
 		# send ACK
