@@ -58,24 +58,7 @@ class Receiver():
 			except:
 				pass
 
-				
-
 		self.writeAllPackets(received_packets)
-
-	# def getNewestACKNum(self, received_packets):
-	# 	prev = 1
-	# 	for key in sorted(received_packets.keys()):
-	# 		if prev != STPHeader(extractHeader(received_packets[key])).seqNum():
-	# 			print ("hey", prev,  STPHeader(extractHeader(received_packets[key])).seqNum())
-	# 			return prev
-	# 		prev = key + int(len(extractContent(received_packets[key])))
-	# 	return prev
-
-			# nextPacketIndex = key + int(len(extractContent(received_packets[key])))
-			# if not received_packets[nextPacketIndex]:
-			# 	return received_packets[int(key) + int(len(extractContent(received_packets[key])))]
-		#highestSeqNum = max(received_packets.keys())
-		#return int(highestSeqNum) + int(len(extractContent(received_packets[highestSeqNum])))
 
 	def writeAllPackets(self, received_packets):
 		for k in sorted(received_packets.keys()):

@@ -75,11 +75,10 @@ class Sender:
 		next_seq_num = 0 # earliest not sent packet
 
 		while sendbase < len(stp_packets) - 1:
-			print ("sendbase = ", sendbase, "len", len(stp_packets))
 			# # when window finished, send all packets in this new window
-			#print ("sendbase = ", sendbase, "next_seq_num", next_seq_num)
 			if sendbase == next_seq_num:
 				for i in range(0,(self._MWS / self._MSS)):
+					print ("hey sendin packet", sendbase +i)
 					if (sendbase + i >= len(stp_packets)):
 						break
 					if self.PLDModule():
@@ -102,17 +101,19 @@ class Sender:
 
 			if isAck: # received an ack
 				print("ack got", ackNum)
-				if (ackNum > sendbase):
+				if (ackNum > stp_packets[sendbase]._header.seqNum()):
 					i = 0
+					found = 0
 					for packet in stp_packets:
-						
 						if packet._header.seqNum() == ackNum:
-							sendbase = i
-							break
+							found = i
 						i += 1
+					if found != 0:
+						sendbase = found
 					self._timer = time.time()
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time()
+
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
 				if self.PLDModule():
@@ -121,12 +122,11 @@ class Sender:
 
 	# Simulates packet loss
 	def PLDModule(self):
-		# rand_num = random.random()
-		# if (rand_num >= self._pdrop):
-		# 	return True
-		# return False
-		return True
-
+		rand_num = random.random()
+		if (rand_num >= self._pdrop):
+			return True
+		return False
+		
 
 	# creates a UDP packet, where the "data" in the packet
 	# is the STP packet
