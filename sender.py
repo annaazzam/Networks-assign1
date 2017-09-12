@@ -16,8 +16,8 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
-		self._timer = 0
-
+		self._timer = time.time()
+		self._log = open("Sender_log.txt", "w")
 		self._buffer_size = HEADER_SIZE + MSS
 
 		random.seed(seed)
@@ -35,20 +35,29 @@ class Sender:
 		# create a UDP server socket
 		self._sender_socket = socket(AF_INET, SOCK_DGRAM)
 
-		# ACK num 0 indicates no ack...
+		# THREE WAY HANDSHAKE:
+		# send syn
 		firstHeader = STPHeader(Sender.current_seq_number, 0, 0, 1, 0, 0, False)
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
-
-		# THREE WAY HANDSHAKE:
-		# send syn
 		self.createUDPDatagram(firstPacket)
+		self.writeToLog("snd", time.time() - self._timer, "S", 0, 0, 0)
+		self._timer = time.time()
+
 		# wait for a syn-ack
 		message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		synackHeader = STPHeader(extractHeader(message))
+		SAtype = ""
+		if (synackHeader.isSyn() and synackHeader.isAck()):
+			SAtype = "SA"
+		self.writeToLog("rcv", time.time() - self._timer, "SA", synackHeader.seqNum(), 0, synackHeader.ackNum())
+		self._timer = time.time()
+
 		# send ack
-		ackHeader = STPHeader(0, 0, 1, 0, 0, 0, False)
+		ackHeader = STPHeader(2, synackHeader.seqNum() + 1, 1, 0, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self.createUDPDatagram(ackPacket)
+		self.writeToLog("snd", time.time() - self._timer, "A", 2, 0, synackHeader.seqNum() + 1)
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):
@@ -172,7 +181,12 @@ class Sender:
 		print ("sent ack")
 
 		
-
+	# <snd/rcv/drop> <time> <type of packet> <seq-num> <num-of-bytes> <ack-num>
+	# type of packet is S, A, F or D
+	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
+		contentToWrite = sendRcv + " " + str(time) + " " + packetType + " " 
+		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
+		self._log.write(contentToWrite)
 
 #MAIN "FUNCTION":
 

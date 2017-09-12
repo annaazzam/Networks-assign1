@@ -74,9 +74,10 @@ class Receiver():
 
 	# creates an ACK and sends it via the UDP socket
 	def transmitACKPacket(self, ack_number, isSyn, clientAddress):
-		ackHeader = STPHeader(0, ack_number, 1, isSyn, 0, 0, False)
+		ackHeader = STPHeader(Receiver.current_ack_num, ack_number, 1, isSyn, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self._receiver_socket.sendto(str(ackPacket).encode(), clientAddress)
+		Receiver.current_ack_num += 1
 
 	def terminateConnection(self, addr):
 		# send ack

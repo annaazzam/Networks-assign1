@@ -34,6 +34,9 @@ class STPHeader:
 	def isFin(self):
 		return self._fin
 
+	def isSyn(self):
+		return self._syn
+
 	# TODO(anna): add number padding to even out widths
 	def __str__(self):
 		ret_string = ""
