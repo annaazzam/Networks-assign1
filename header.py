@@ -50,6 +50,14 @@ class STPHeader:
 
 		return ret_string
 
+	def getType(self):
+		ret_string = ""
+		ret_string += ("A" if self._ack else "")
+		ret_string += ("S" if self._syn else "")
+		ret_string += ("F" if self._fin else "")
+		ret_string += ("D" if self._data else "")
+		return ret_string
+
 def extractHeader(packet):
 	packet = str(packet)
 	return packet[:HEADER_SIZE]

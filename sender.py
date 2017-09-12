@@ -16,7 +16,7 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
-		self._timer = time.time()
+		self._timer = getTime()
 		self._log = open("Sender_log.txt", "w")
 		self._buffer_size = HEADER_SIZE + MSS
 
@@ -41,23 +41,18 @@ class Sender:
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 		self.createUDPDatagram(firstPacket)
-		self.writeToLog("snd", time.time() - self._timer, "S", 0, 0, 0)
-		self._timer = time.time()
+		self._timer = getTime()
 
 		# wait for a syn-ack
-		message, addr = self._sender_socket.recvfrom(self._buffer_size)
-		synackHeader = STPHeader(extractHeader(message))
-		SAtype = ""
-		if (synackHeader.isSyn() and synackHeader.isAck()):
-			SAtype = "SA"
-		self.writeToLog("rcv", time.time() - self._timer, "SA", synackHeader.seqNum(), 0, synackHeader.ackNum())
-		self._timer = time.time()
+		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		message,addr = self.receive()
+		self._timer = getTime()
 
 		# send ack
-		ackHeader = STPHeader(2, synackHeader.seqNum() + 1, 1, 0, 0, 0, False)
+		ackHeader = STPHeader(2, 1, 1, 0, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self.createUDPDatagram(ackPacket)
-		self.writeToLog("snd", time.time() - self._timer, "A", 2, 0, synackHeader.seqNum() + 1)
+		self._timer = getTime()
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):
@@ -103,7 +98,8 @@ class Sender:
 			isAck = False
 			ackNum = 0
 			try:
-				message, addr = self._sender_socket.recvfrom(self._buffer_size)
+				#message, addr = self._sender_socket.recvfrom(self._buffer_size)
+				message,addr = self.receive()
 				header = STPHeader(extractHeader(message))
 				isAck = header.isAck()
 				ackNum = header.ackNum()
@@ -134,11 +130,11 @@ class Sender:
 					 	self._timer = time.time()
 				else:
 					dupAcks[ackNum] += 1
-					if (dupAcks[ackNum] == 3):
+					if (dupAcks[ackNum] == 3): # Fast retransmit!
 						print ("fast retransmitting")
-						for packet in stp_packets:
+						for packet in stp_packets: 
 							if packet._header.seqNum() == ackNum:
-								self.createUDPDatagram(packet)
+								self.PLDModule(packet)
 
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
@@ -150,7 +146,9 @@ class Sender:
 		rand_num = random.random()
 		if (rand_num > self._pdrop):
 			self.createUDPDatagram(packet)
-		# else packet is dropped (not sent)
+			self.writeToLog("snd", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
+		else: #packet is dropped (not sent)
+			self.writeToLog("drop", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
 		
 
 	# creates a UDP packet, where the "data" in the packet
@@ -167,11 +165,13 @@ class Sender:
 		print ("sent FIN")
 
 		# wait for ACK
-		message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		message,addr = self.receive()
 		print ("recevied ACK")
 
 		# wait for FIN
-		message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		message,addr = self.receive()
 		print("received FIN")
 
 		# send ACK
@@ -187,6 +187,15 @@ class Sender:
 		contentToWrite = sendRcv + " " + str(time) + " " + packetType + " " 
 		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
 		self._log.write(contentToWrite)
+
+	def receive(self):
+		message, addr = self._sender_socket.recvfrom(self._buffer_size)
+		packetHeader = STPHeader(extractHeader(message))
+		self.writeToLog("rcv", getTime() - self._timer, packetHeader.getType(), packetHeader.seqNum(), len(extractContent(message)), packetHeader.ackNum())
+		return message, addr
+
+def getTime():
+	return time.time() * 1000
 
 #MAIN "FUNCTION":
 
