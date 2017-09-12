@@ -16,7 +16,7 @@ class Sender:
 		self._MSS = MSS
 		self._timeout = timeout
 		self._pdrop = pdrop
-		self._timer = time.time() + 99999999 # fix dis
+		self._timer = 0
 
 		random.seed(seed)
 
@@ -64,7 +64,7 @@ class Sender:
 			header = STPHeader(Sender.current_seq_number, 0, 0, 0, 0, 1, False)
 			stp_packet = STPPacket(header, curr_packet_data)
 			stp_packets.append(stp_packet)
-			Sender.current_seq_number += self._MSS
+			Sender.current_seq_number += len(curr_packet_data)
 			i += self._MSS
 
 		return stp_packets
@@ -74,17 +74,19 @@ class Sender:
 		sendbase = 0 # earliest not acked packet
 		next_seq_num = 0 # earliest not sent packet
 
-		while next_seq_num < len(stp_packets):
+		while sendbase < len(stp_packets):
+			#print ("sendbase = ", sendbase, "next_seq_num", next_seq_num)
 			# # when window finished, send all packets in this new window
+			#print ("sendbase = ", sendbase, "next_seq_num", next_seq_num)
 			if sendbase == next_seq_num:
+				print ("made it boys")
 				for i in range(0,(self._MWS / self._MSS)):
 					if (sendbase + i >= len(stp_packets)):
 						break
 					if self.PLDModule():
 						self.createUDPDatagram(stp_packets[sendbase + i])
-					else:
-						pass 
 					next_seq_num += 1
+					self._timer = time.time()
 
 			# try to get an ACK:
 			self._sender_socket.setblocking(0)
@@ -99,34 +101,33 @@ class Sender:
 				# no packet right now
 				pass
 
-			currTimePassed = time.time() - self._timer
-
 			if isAck: # received an ack
-				print("ack got")
+				print("ack got", ackNum)
 				if (ackNum > sendbase):
+					print ("hey")
 					i = 0
 					for packet in stp_packets:
+						
 						if packet._header.seqNum() == ackNum:
 							sendbase = i
 							break
 						i += 1
+					self._timer = time.time()
 					if (sendbase < next_seq_num):
-					 	self._timer = time.time() 
-			elif currTimePassed >= self._timeout: # if timeout
-				print("timeout happened")
-				if self.PLDModule():
-					self.createUDPDatagram(stp_packets[sendbase])
-				else:
-					pass # is dropped!! ??
-				self._timer = time.time() 
-
+					 	self._timer = time.time()
+			# elif self._timer >= self._timeout: # if timeout
+			# 	print("timeout happened")
+			# 	if self.PLDModule():
+			# 		self.createUDPDatagram(stp_packets[sendbase])
+			# 	self._timer = time.time()
 
 	# Simulates packet loss
 	def PLDModule(self):
-		rand_num = random.random()
-		if (rand_num >= self._pdrop):
-			return True
-		return False
+		# rand_num = random.random()
+		# if (rand_num >= self._pdrop):
+		# 	return True
+		# return False
+		return True
 
 
 	# creates a UDP packet, where the "data" in the packet

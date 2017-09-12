@@ -32,13 +32,12 @@ class Receiver():
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
 		received_packets = {}
-		next_expected = 0
+		next_expected = 1
 		while True:
 			UDP_segment = False
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				print("received:", UDP_segment)
-
 
 				header = STPHeader(extractHeader(UDP_segment))
 
@@ -48,17 +47,34 @@ class Receiver():
 				seqNum = header.seqNum()
 				received_packets[seqNum] = UDP_segment
 
-				ackNum = self.getNewestACKNum(received_packets)
+				if (seqNum == next_expected):
+					print("not gotten expected")
+					next_expected = int(seqNum) + int(len(extractContent(UDP_segment)))
+					while next_expected in received_packets.keys():
+						next_expected += int(len(extractContent(received_packets[next_expected])))
 
-				self.transmitACKPacket(ackNum, 0, addr)
+				self.transmitACKPacket(next_expected, 0, addr)
 			except:
 				pass
+
+				
 
 		self.writeAllPackets(received_packets)
 
 	def getNewestACKNum(self, received_packets):
-		highestSeqNum = max(received_packets.keys())
-		return int(highestSeqNum) + int(len(extractContent(received_packets[highestSeqNum])))
+		prev = 1
+		for key in sorted(received_packets.keys()):
+			if prev != STPHeader(extractHeader(received_packets[key])).seqNum():
+				print ("hey", prev,  STPHeader(extractHeader(received_packets[key])).seqNum())
+				return prev
+			prev = key + int(len(extractContent(received_packets[key])))
+		return prev
+
+			# nextPacketIndex = key + int(len(extractContent(received_packets[key])))
+			# if not received_packets[nextPacketIndex]:
+			# 	return received_packets[int(key) + int(len(extractContent(received_packets[key])))]
+		#highestSeqNum = max(received_packets.keys())
+		#return int(highestSeqNum) + int(len(extractContent(received_packets[highestSeqNum])))
 
 	def writeAllPackets(self, received_packets):
 		for k in sorted(received_packets.keys()):
