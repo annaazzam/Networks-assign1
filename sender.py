@@ -74,6 +74,8 @@ class Sender:
 		sendbase = 0 # earliest not acked packet
 		next_seq_num = 0 # earliest not sent packet
 
+		dupAcks = {} # To store duplicate ACKs
+
 		while sendbase < len(stp_packets):
 			# # when window finished, send all packets in this new window
 			if sendbase == next_seq_num:
@@ -104,6 +106,7 @@ class Sender:
 				if (ackNum > stp_packets[sendbase]._header.seqNum()):
 					i = 0
 					found = 0
+					dupAcks[ackNum] = 1
 					for packet in stp_packets:
 						if packet._header.seqNum() == ackNum:
 							found = i
@@ -119,6 +122,13 @@ class Sender:
 					self._timer = time.time()
 					if (sendbase < next_seq_num):
 					 	self._timer = time.time()
+				else:
+					dupAcks[ackNum] += 1
+					if (dupAcks[ackNum] == 3):
+						print ("fast retransmitting")
+						for packet in stp_packets:
+							if packet._header.seqNum() == ackNum:
+								self.createUDPDatagram(packet)
 
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
