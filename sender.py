@@ -138,6 +138,7 @@ class Sender:
 					 	self._timer = getTime()
 				else:
 					dupAcks[ackNum] += 1
+					self._dupAcksReceived += 1
 					if (dupAcks[ackNum] >= 3): # Fast retransmit!
 						dupAcks[ackNum] = 0
 						print ("fast retransmitting")
