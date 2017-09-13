@@ -8,7 +8,6 @@ import time
 class Sender:
 	global current_seq_number
 
-
 	def __init__(self, receiver_host_ip, receiver_port, filename, MWS, MSS, timeout, pdrop, seed):
 		self._receiver_host_ip = receiver_host_ip
 		self._receiver_port = receiver_port
@@ -98,6 +97,8 @@ class Sender:
 					print ("hey sendin packet", sendbase +i)
 					if (sendbase + i >= len(stp_packets)):
 						break
+					self._dataTransferred += len(stp_packets[sendbase + i]._data)
+					self._numSegmentsSent += 1
 					self.PLDModule(stp_packets[sendbase + i])
 					next_seq_num += 1
 					self._timer = getTime()
@@ -139,14 +140,17 @@ class Sender:
 					 	self._timer = getTime()
 				else:
 					dupAcks[ackNum] += 1
-					if (dupAcks[ackNum] == 3): # Fast retransmit!
+					if (dupAcks[ackNum] >= 3): # Fast retransmit!
+						dupAcks[ackNum] = 0
 						print ("fast retransmitting")
+						self._numRetransmitted += 1
 						for packet in stp_packets: 
 							if packet._header.seqNum() == ackNum:
 								self.PLDModule(packet)
 
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
+				self._numRetransmitted += 1
 				self.PLDModule(stp_packets[sendbase])
 				self._timer = getTime()
 
@@ -157,6 +161,7 @@ class Sender:
 			self.createUDPDatagram(packet)
 			self.writeToLog("snd", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
 		else: #packet is dropped (not sent)
+			self._numDropped += 1
 			self.writeToLog("drop", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
 		
 
@@ -199,7 +204,7 @@ class Sender:
 	# <snd/rcv/drop> <time> <type of packet> <seq-num> <num-of-bytes> <ack-num>
 	# type of packet is S, A, F or D
 	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
-		contentToWrite = sendRcv + " " + str(time * 1000) + " " + packetType + " " 
+		contentToWrite = sendRcv + " " + str(round((time * 1000), 2)) + " " + packetType + " " 
 		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
 		self._log.write(contentToWrite)
 
