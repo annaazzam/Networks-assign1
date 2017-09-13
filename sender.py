@@ -91,7 +91,7 @@ class Sender:
 						break
 					self.PLDModule(stp_packets[sendbase + i])
 					next_seq_num += 1
-					self._timer = time.time()
+					self._timer = getTime()
 
 			# try to get an ACK:
 			self._sender_socket.setblocking(0)
@@ -125,9 +125,9 @@ class Sender:
 						print("she did that")
 						break
 
-					self._timer = time.time()
+					self._timer = getTime()
 					if (sendbase < next_seq_num):
-					 	self._timer = time.time()
+					 	self._timer = getTime()
 				else:
 					dupAcks[ackNum] += 1
 					if (dupAcks[ackNum] == 3): # Fast retransmit!
@@ -139,7 +139,7 @@ class Sender:
 			elif self._timer >= self._timeout: # if timeout
 				print("timeout happened")
 				self.PLDModule(stp_packets[sendbase])
-				self._timer = time.time()
+				self._timer = getTime()
 
 	# Simulates packet loss
 	def PLDModule(self, packet):
@@ -184,7 +184,7 @@ class Sender:
 	# <snd/rcv/drop> <time> <type of packet> <seq-num> <num-of-bytes> <ack-num>
 	# type of packet is S, A, F or D
 	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
-		contentToWrite = sendRcv + " " + str(time) + " " + packetType + " " 
+		contentToWrite = sendRcv + " " + str(time * 1000) + " " + packetType + " " 
 		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
 		self._log.write(contentToWrite)
 
