@@ -10,10 +10,13 @@ class Receiver():
 	def __init__(self, receiver_port, filename):
 		self._receiver_port = receiver_port
 		self._file = open(filename, "w")
-
 		self._received_buffer = []
-
 		self._log = open("Receiver_log.txt", "w")
+
+		#REPORT DATA:
+		self._dataReceived = 0
+		self._numSegmentsReceived = 0
+		self._numDupSegmentsReceived = 0
 
 		self.beginCommunication()
 		self.communicate()
@@ -44,9 +47,7 @@ class Receiver():
 		received_packets = {} # Buffer for out-of-order received packets
 		next_expected = 1
 		while True:
-			#UDP_segment = False
-
-			# tries to get a packet - either ACK or FIN
+			# tries to get a packet - either DATA or FIN
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				receivedHeader = STPHeader(extractHeader(UDP_segment))
@@ -61,7 +62,17 @@ class Receiver():
 					break
 
 				seqNum = header.seqNum()
+				if (seqNum in received_packets.keys()):
+					print ("duplicate")
+					self._numDupSegmentsReceived += 1
+				else:
+					print("not duplicate")
+					print ("len = ", str(len(extractContent(UDP_segment))))
+					self._dataReceived += len(extractContent(UDP_segment))
 				received_packets[seqNum] = UDP_segment
+
+				#self._dataReceived += len(extractContent(UDP_segment))
+				self._numSegmentsReceived += 1
 
 				if (seqNum == next_expected):
 					print("not gotten expected")
@@ -110,6 +121,11 @@ class Receiver():
 		receivedHeader = STPHeader(extractHeader(ack_segment))
 		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(ack_segment)), receivedHeader.ackNum())
 		print("received ack")
+
+		self._log.write("Amount of (original) Data Received: " + str(self._dataReceived) + "\n")
+		self._log.write("Number of Data Segments Received: " + str(self._numSegmentsReceived) + "\n")
+		self._log.write("Number of duplicate segments received " + str(self._numDupSegmentsReceived) + "\n")
+		
 
 	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
 		contentToWrite = sendRcv + " " + str(round(time, 2)) + " " + packetType + " " 
