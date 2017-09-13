@@ -105,7 +105,6 @@ class Sender:
 			isAck = False
 			ackNum = 0
 			try:
-				#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 				message,addr = self.receive()
 				header = STPHeader(extractHeader(message))
 				isAck = header.isAck()
@@ -172,10 +171,8 @@ class Sender:
 		self.createUDPDatagram(finPacket)
 
 		# wait for ACK
-		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		message,addr = self.receive()
 		# wait for FIN
-		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		message,addr = self.receive()
 
 		# send ACK

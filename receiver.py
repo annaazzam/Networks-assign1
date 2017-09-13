@@ -64,7 +64,6 @@ class Receiver():
 					self._dataReceived += len(extractContent(UDP_segment))
 				received_packets[seqNum] = UDP_segment
 
-				#self._dataReceived += len(extractContent(UDP_segment))
 				self._numSegmentsReceived += 1
 
 				if (seqNum == next_expected):
