@@ -26,21 +26,19 @@ class Receiver():
 		self._receiver_socket = socket(AF_INET, SOCK_DGRAM)
 		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
 		
+		# Receive SYN
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		self._startTime = getTime() # start timer once communication begins
 		receivedHeader = STPHeader(extractHeader(UDP_segment))
 		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
-		# check if syn
-		print ("syn received")
 
+		# Send SYN ACK
 		self.transmitACKPacket(1, True, addr)
-		print("syn-ack sent")
 
+		# Receive ACK
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		receivedHeader = STPHeader(extractHeader(UDP_segment))
 		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
-		# check if ack
-		print("ack received")
 		
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
@@ -52,22 +50,17 @@ class Receiver():
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 				receivedHeader = STPHeader(extractHeader(UDP_segment))
 				self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
-				print("received:", UDP_segment)
 
 				header = STPHeader(extractHeader(UDP_segment))
 
 				if header.isFin(): # Connection terminating!
-					print ("Terminate......")
 					self.terminateConnection(addr)
 					break
 
 				seqNum = header.seqNum()
 				if (seqNum in received_packets.keys()):
-					print ("duplicate")
 					self._numDupSegmentsReceived += 1
 				else:
-					print("not duplicate")
-					print ("len = ", str(len(extractContent(UDP_segment))))
 					self._dataReceived += len(extractContent(UDP_segment))
 				received_packets[seqNum] = UDP_segment
 
@@ -75,7 +68,6 @@ class Receiver():
 				self._numSegmentsReceived += 1
 
 				if (seqNum == next_expected):
-					print("not gotten expected")
 					next_expected = int(seqNum) + int(len(extractContent(UDP_segment)))
 					while next_expected in received_packets.keys():
 						next_expected += int(len(extractContent(received_packets[next_expected])))
@@ -106,21 +98,17 @@ class Receiver():
 	def terminateConnection(self, addr):
 		# send ack
 		self.transmitACKPacket(0, 0, addr)
-		print ("sent ack")
 
 		# send fin
 		finHeader = STPHeader(0, 0, 0, 0, 1, 0, False)
 		finPacket = STPPacket(finHeader, "")
 		self._receiver_socket.sendto(str(finPacket).encode(), addr)
 		self.writeToLog("snd", getTime() - self._startTime, finHeader.getType(), finHeader.seqNum(), 0, finHeader.ackNum())
-		print ("sent fin")
-
 		# receive ACK
 		self._receiver_socket.setblocking(1)
 		ack_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
 		receivedHeader = STPHeader(extractHeader(ack_segment))
 		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(ack_segment)), receivedHeader.ackNum())
-		print("received ack")
 
 		self._log.write("Amount of (original) Data Received: " + str(self._dataReceived) + "\n")
 		self._log.write("Number of Data Segments Received: " + str(self._numSegmentsReceived) + "\n")

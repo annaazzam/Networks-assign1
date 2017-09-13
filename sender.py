@@ -92,7 +92,6 @@ class Sender:
 			# # when window finished, send all packets in this new window
 			if sendbase == next_seq_num:
 				for i in range(0,(self._MWS / self._MSS)):
-					print ("hey sendin packet", sendbase +i)
 					if (sendbase + i >= len(stp_packets)):
 						break
 					self._dataTransferred += len(stp_packets[sendbase + i]._data)
@@ -116,7 +115,6 @@ class Sender:
 				pass
 
 			if isAck: # received an ack
-				print("ack got", ackNum)
 				if (ackNum > stp_packets[sendbase]._header.seqNum()):
 					i = 0
 					found = 0
@@ -130,7 +128,6 @@ class Sender:
 
 					lastPack = stp_packets[len(stp_packets) - 1]
 					if ackNum == lastPack._header.seqNum() + len(lastPack._data):
-						print("she did that")
 						break
 
 					#self._timer = getTime()
@@ -141,7 +138,6 @@ class Sender:
 					self._dupAcksReceived += 1
 					if (dupAcks[ackNum] >= 3): # Fast retransmit!
 						dupAcks[ackNum] = 0
-						print ("fast retransmitting")
 						self._numRetransmitted += 1
 						for packet in stp_packets: 
 							if packet._header.seqNum() == ackNum:
@@ -149,7 +145,6 @@ class Sender:
 								self._timer = getTime()
 
 			elif getTime() - self._timer  >= self._timeout: # if timeout
-				print("timeout happened")
 				self._numRetransmitted += 1
 				self.PLDModule(stp_packets[sendbase])
 				self._timer = getTime()
@@ -172,27 +167,21 @@ class Sender:
 
 	def terminateConnection(self):
 		self._sender_socket.setblocking(1)
-		print ("made it boys")
 		finHeader = STPHeader(Sender.current_seq_number,0, 0, 0, 1, 0, False)
 		finPacket = STPPacket(finHeader, "")
 		self.createUDPDatagram(finPacket)
-		print ("sent FIN")
 
 		# wait for ACK
 		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		message,addr = self.receive()
-		print ("recevied ACK")
-
 		# wait for FIN
 		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		message,addr = self.receive()
-		print("received FIN")
 
 		# send ACK
 		ackHeader = STPHeader(Sender.current_seq_number,0, 0, 1, 0, 0, False)
 		ackPacket = STPPacket(finHeader, "")
 		self.createUDPDatagram(ackPacket)
-		print("sent ack")
 
 		self._log.write("Amount of (original) Data Transferred: " + str(self._dataTransferred) + "\n")
 		self._log.write("Number of Data Segments Sent (Excluding retransmissions): " + str(self._numSegmentsSent) + "\n")
