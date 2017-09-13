@@ -2,6 +2,7 @@ from socket import *
 import sys
 from header import STPHeader, extractHeader, extractContent
 from packet import STPPacket
+import time
 
 class Receiver():
 	global current_ack_num
@@ -12,6 +13,8 @@ class Receiver():
 
 		self._received_buffer = []
 
+		self._log = open("Receiver_log.txt", "w")
+
 		self.beginCommunication()
 		self.communicate()
 
@@ -21,14 +24,21 @@ class Receiver():
 		self._receiver_socket.bind(("127.0.0.1", self._receiver_port))
 		
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		self._startTime = getTime() # start timer once communication begins
+		receivedHeader = STPHeader(extractHeader(UDP_segment))
+		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
 		# check if syn
 		print ("syn received")
+
 		self.transmitACKPacket(1, True, addr)
 		print("syn-ack sent")
+
 		UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		receivedHeader = STPHeader(extractHeader(UDP_segment))
+		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
 		# check if ack
 		print("ack received")
-
+		
 	def communicate(self):
 		self._receiver_socket.setblocking(0)
 		received_packets = {} # Buffer for out-of-order received packets
@@ -39,6 +49,8 @@ class Receiver():
 			# tries to get a packet - either ACK or FIN
 			try:
 				UDP_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+				receivedHeader = STPHeader(extractHeader(UDP_segment))
+				self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(UDP_segment)), receivedHeader.ackNum())
 				print("received:", UDP_segment)
 
 				header = STPHeader(extractHeader(UDP_segment))
@@ -77,6 +89,7 @@ class Receiver():
 		ackHeader = STPHeader(Receiver.current_ack_num, ack_number, 1, isSyn, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self._receiver_socket.sendto(str(ackPacket).encode(), clientAddress)
+		self.writeToLog("snd", getTime() - self._startTime, ackHeader.getType(), ackHeader.seqNum(), 0, ackHeader.ackNum())
 		Receiver.current_ack_num += 1
 
 	def terminateConnection(self, addr):
@@ -88,12 +101,23 @@ class Receiver():
 		finHeader = STPHeader(0, 0, 0, 0, 1, 0, False)
 		finPacket = STPPacket(finHeader, "")
 		self._receiver_socket.sendto(str(finPacket).encode(), addr)
+		self.writeToLog("snd", getTime() - self._startTime, finHeader.getType(), finHeader.seqNum(), 0, finHeader.ackNum())
 		print ("sent fin")
 
 		# receive ACK
 		self._receiver_socket.setblocking(1)
 		ack_segment, addr = self._receiver_socket.recvfrom(self._receiver_port)
+		receivedHeader = STPHeader(extractHeader(ack_segment))
+		self.writeToLog("rcv", getTime() - self._startTime, receivedHeader.getType(), receivedHeader.seqNum(), len(extractContent(ack_segment)), receivedHeader.ackNum())
 		print("received ack")
+
+	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
+		contentToWrite = sendRcv + " " + str(round(time, 2)) + " " + packetType + " " 
+		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
+		self._log.write(contentToWrite)
+
+def getTime():
+	return time.time() * 1000
 
 
 Receiver.current_ack_num = 0
