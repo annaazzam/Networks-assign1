@@ -8,6 +8,7 @@ import time
 class Sender:
 	global current_seq_number
 
+
 	def __init__(self, receiver_host_ip, receiver_port, filename, MWS, MSS, timeout, pdrop, seed):
 		self._receiver_host_ip = receiver_host_ip
 		self._receiver_port = receiver_port
@@ -19,6 +20,14 @@ class Sender:
 		self._timer = getTime()
 		self._log = open("Sender_log.txt", "w")
 		self._buffer_size = HEADER_SIZE + MSS
+
+
+		# REPORT DATA:
+		self._dataTransferred = 0 # amount of data transferred in bytes
+		self._numSegmentsSent = 0 # excluding retransmissions
+		self._numDropped = 0 # num packets dropped by PLD
+		self._numRetransmitted = 0 
+		self._dupAcksReceived = 0
 
 		random.seed(seed)
 
@@ -178,7 +187,13 @@ class Sender:
 		ackHeader = STPHeader(Sender.current_seq_number,0, 0, 1, 0, 0, False)
 		ackPacket = STPPacket(finHeader, "")
 		self.createUDPDatagram(ackPacket)
-		print ("sent ack")
+		print("sent ack")
+
+		self._log.write("Amount of (original) Data Transferred: " + str(self._dataTransferred) + "\n")
+		self._log.write("Number of Data Segments Sent (Excluding retransmissions): " + str(self._numSegmentsSent) + "\n")
+		self._log.write("Number of (all) Packets Dropped (by the PLD module): " + str(self._numDropped) + "\n")
+		self._log.write("Number of Retransmitted Segments: " + str(self._numRetransmitted) + "\n")
+		self._log.write("Number of Duplicate Acknowledgements received: " + str(self._dupAcksReceived) + "\n")
 
 		
 	# <snd/rcv/drop> <time> <type of packet> <seq-num> <num-of-bytes> <ack-num>
