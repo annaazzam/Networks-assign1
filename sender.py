@@ -17,6 +17,7 @@ class Sender:
 		self._timeout = timeout
 		self._pdrop = pdrop
 		self._timer = getTime()
+		self._startTime = getTime()
 		self._log = open("Sender_log.txt", "w")
 		self._buffer_size = HEADER_SIZE + MSS
 
@@ -49,18 +50,15 @@ class Sender:
 		Sender.current_seq_number += 1
 		firstPacket = STPPacket(firstHeader, "")
 		self.createUDPDatagram(firstPacket)
-		self._timer = getTime()
 
 		# wait for a syn-ack
 		#message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		message,addr = self.receive()
-		self._timer = getTime()
 
 		# send ack
 		ackHeader = STPHeader(2, 1, 1, 0, 0, 0, False)
 		ackPacket = STPPacket(ackHeader, "")
 		self.createUDPDatagram(ackPacket)
-		self._timer = getTime()
 
 	# Reads the file and creates an STP segment
 	def createSTPPackets(self):
@@ -135,7 +133,7 @@ class Sender:
 						print("she did that")
 						break
 
-					self._timer = getTime()
+					#self._timer = getTime()
 					if (sendbase < next_seq_num):
 					 	self._timer = getTime()
 				else:
@@ -147,8 +145,9 @@ class Sender:
 						for packet in stp_packets: 
 							if packet._header.seqNum() == ackNum:
 								self.PLDModule(packet)
+								self._timer = getTime()
 
-			elif self._timer >= self._timeout: # if timeout
+			elif getTime() - self._timer  >= self._timeout: # if timeout
 				print("timeout happened")
 				self._numRetransmitted += 1
 				self.PLDModule(stp_packets[sendbase])
@@ -159,10 +158,10 @@ class Sender:
 		rand_num = random.random()
 		if (rand_num > self._pdrop):
 			self.createUDPDatagram(packet)
-			self.writeToLog("snd", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
+			self.writeToLog("snd", getTime() - self._startTime, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
 		else: #packet is dropped (not sent)
 			self._numDropped += 1
-			self.writeToLog("drop", getTime() - self._timer, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
+			self.writeToLog("drop", getTime() - self._startTime, packet._header.getType(), packet._header.seqNum(), len(packet._data), packet._header.ackNum())
 		
 
 	# creates a UDP packet, where the "data" in the packet
@@ -204,14 +203,14 @@ class Sender:
 	# <snd/rcv/drop> <time> <type of packet> <seq-num> <num-of-bytes> <ack-num>
 	# type of packet is S, A, F or D
 	def writeToLog(self, sendRcv, time, packetType, seqNum, numBytes, ackNum):
-		contentToWrite = sendRcv + " " + str(round((time * 1000), 2)) + " " + packetType + " " 
+		contentToWrite = sendRcv + " " + str(round(time, 2)) + " " + packetType + " " 
 		contentToWrite += str(seqNum) + " " + str(numBytes) + " " + str(ackNum) + "\n"
 		self._log.write(contentToWrite)
 
 	def receive(self):
 		message, addr = self._sender_socket.recvfrom(self._buffer_size)
 		packetHeader = STPHeader(extractHeader(message))
-		self.writeToLog("rcv", getTime() - self._timer, packetHeader.getType(), packetHeader.seqNum(), len(extractContent(message)), packetHeader.ackNum())
+		self.writeToLog("rcv", getTime() - self._startTime, packetHeader.getType(), packetHeader.seqNum(), len(extractContent(message)), packetHeader.ackNum())
 		return message, addr
 
 def getTime():
