@@ -1,4 +1,4 @@
-HEADER_SIZE = 18
+HEADER_SIZE = 16
 
 class STPHeader:
 	def __init__(self, seq_num=0, ack_num=0, ack=0, syn=0, fin=0, data=0, isCopyConstructor=True):
@@ -6,12 +6,12 @@ class STPHeader:
 			header = seq_num
 
 			self._seq_num = int(header[0:6])
-			self._ack_number = int(header[7:13])
+			self._ack_number = int(header[6:12])
 
-			self._ack = (1 if header[14] != '-' else 0)
-			self._syn = (1 if header[15] != '-' else 0)
-			self._fin = (1 if header[16] != '-' else 0)
-			self._data = (1 if header[17] != '-' else 0)
+			self._ack = (1 if header[12] != '-' else 0)
+			self._syn = (1 if header[13] != '-' else 0)
+			self._fin = (1 if header[14] != '-' else 0)
+			self._data = (1 if header[15] != '-' else 0)
 		else:
 			self._seq_num = int(seq_num)
 			self._ack_number = int(ack_num)
@@ -41,7 +41,7 @@ class STPHeader:
 	def __str__(self):
 		ret_string = ""
 
-		ret_string += '{0:06d}'.format(self._seq_num) + " " + '{0:06d}'.format(self._ack_number) + " "
+		ret_string += '{0:06d}'.format(self._seq_num) + '{0:06d}'.format(self._ack_number)
 
 		ret_string += ("A" if self._ack else "-")
 		ret_string += ("S" if self._syn else "-")
