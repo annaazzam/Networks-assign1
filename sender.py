@@ -215,7 +215,7 @@ receiver_port = int(sys.argv[2])
 filename = sys.argv[3]
 MWS = int(sys.argv[4])
 MSS = int(sys.argv[5])
-timeout = int(sys.argv[6])
+timeout = float(sys.argv[6])
 pdrop = float(sys.argv[7])
 seed = float(sys.argv[8])
 
